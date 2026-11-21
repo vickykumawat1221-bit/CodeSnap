@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeSnap - Mini Programming Language Compiler & IDE</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-left">
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+        <span class="logo-text">Code<strong>Snap</strong></span>
+        <span class="badge toc-badge">TOC Compiler IDE</span>
+      </div>
+
+      <div class="quick-examples">
+        <label for="exampleSelect">Sample:</label>
+        <select id="exampleSelect" title="Select a sample program to load">
+          <option value="">-- Load Sample Program --</option>
+          <!-- Dynamically populated -->
+        </select>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <button id="btnRun" class="btn btn-primary" title="Execute CodeSnap program (Ctrl+Enter)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <span>Run</span>
+        <kbd>Ctrl+↵</kbd>
+      </button>
+
+      <button id="btnCompile" class="btn btn-secondary" title="Compile through Lexical, Syntax & Semantic stages">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <span>Compile</span>
+      </button>
+
+      <button id="btnClear" class="btn btn-ghost" title="Clear console output">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        <span>Clear</span>
+      </button>
+
+      <button id="btnReset" class="btn btn-ghost" title="Reset to default code">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2.5 2v6h6M21.5 22v-6h-6"></path>
+          <path d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"></path>
+        </svg>
+        <span>Reset</span>
+      </button>
+    </div>
+
+    <div class="nav-right">
+      <button id="btnOpenAutomata" class="btn btn-tab" title="Theory of Computation: Finite Automata Studio">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="6" cy="6" r="3"></circle>
+          <circle cx="18" cy="18" r="3"></circle>
+          <path d="M6 9v12M18 9v9M6 15h12"></path>
+        </svg>
+        <span>Automata Studio</span>
+      </button>
+
+      <button id="btnDocsModal" class="btn btn-ghost" title="Documentation & Language Reference">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+        <span>Docs & CFG</span>
+      </button>
+
+      <div class="server-status" title="Backend Compiler Server Status">
+        <span class="status-dot online"></span>
+        <span class="status-label">Online</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main IDE Container -->
+  <div class="ide-container">
+    <!-- Left Sidebar: Explorer & Compiler Phases -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">EXPLORER</span>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-heading" data-toggle="examplesList">
+          <span class="arrow">▼</span>
+          <span>Sample Programs (17)</span>
+        </div>
+        <div id="examplesList" class="section-content example-items">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-heading" data-toggle="phasesOverview">
+          <span class="arrow">▼</span>
+          <span>Compiler Phases</span>
+        </div>
+        <div id="phasesOverview" class="section-content phases-list">
+          <div class="phase-item" id="phaseStepLex">
+            <span class="phase-step">1</span>
+            <div class="phase-info">
+              <span class="phase-name">Lexical Analysis</span>
+              <span class="phase-sub">Token Stream & DFA</span>
+            </div>
+            <span class="phase-status" id="statusLex">-</span>
+          </div>
+          <div class="phase-item" id="phaseStepParse">
+            <span class="phase-step">2</span>
+            <div class="phase-info">
+              <span class="phase-name">Syntax Analysis</span>
+              <span class="phase-sub">CFG & AST Building</span>
+            </div>
+            <span class="phase-status" id="statusParse">-</span>
+          </div>
+          <div class="phase-item" id="phaseStepSemantic">
+            <span class="phase-step">3</span>
+            <div class="phase-info">
+              <span class="phase-name">Semantic Analysis</span>
+              <span class="phase-sub">Scope & Type Check</span>
+            </div>
+            <span class="phase-status" id="statusSemantic">-</span>
+          </div>
+          <div class="phase-item" id="phaseStepExec">
+            <span class="phase-step">4</span>
+            <div class="phase-info">
+              <span class="phase-name">Interpreter</span>
+              <span class="phase-sub">AST Tree Walker</span>
+            </div>
+            <span class="phase-status" id="statusExec">-</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-heading" data-toggle="grammarQuick">
+          <span class="arrow">▼</span>
+          <span>Language Cheat Sheet</span>
+        </div>
+        <div id="grammarQuick" class="section-content cheat-sheet">
+          <p class="cheat-label">Keywords:</p>
+          <code>START STOP LET PRINT IF ELSE WHILE FOR TO STEP END TRUE FALSE AND OR NOT</code>
+          <p class="cheat-label">Types:</p>
+          <code>INTEGER, FLOAT, STRING, BOOLEAN</code>
+          <p class="cheat-label">Operators:</p>
+          <code>+ - * / % == != &lt; &lt;= &gt; &gt;= = AND OR NOT</code>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center Pane: Code Editor -->
+    <main class="editor-pane">
+      <div class="editor-tab-bar">
+        <div class="editor-tab active">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          <span id="activeFileName">main.snap</span>
+        </div>
+        <div class="editor-toolbar-right">
+          <button id="btnFormat" class="editor-btn" title="Auto-indent Code">Indent</button>
+          <button id="btnCopyCode" class="editor-btn" title="Copy code to clipboard">Copy</button>
+        </div>
+      </div>
+
+      <div class="editor-wrapper">
+        <div class="line-gutter" id="lineGutter">1</div>
+        <div class="code-area-container">
+          <textarea id="codeEditor" spellcheck="false" placeholder="Write CodeSnap code here..."></textarea>
+          <pre id="highlightDisplay" aria-hidden="true"><code id="highlightCode"></code></pre>
+        </div>
+      </div>
+
+      <!-- Editor Status Bar -->
+      <footer class="editor-status-bar">
+        <div class="status-left">
+          <span id="cursorPos">Ln 1, Col 1</span>
+          <span id="charCount">0 characters</span>
+          <span id="lineCount">1 lines</span>
+        </div>
+        <div class="status-right">
+          <span class="lang-tag">CodeSnap (TOC)</span>
+          <span id="compilationStatus" class="tag-status">Ready</span>
+        </div>
+      </footer>
+    </main>
+
+    <!-- Right Pane: Tabs for Output, AST, Tokens, Symbols, Errors, Automata -->
+    <aside class="inspector-pane">
+      <div class="inspector-tabs">
+        <button class="tab-btn active" data-tab="tabConsole">Console</button>
+        <button class="tab-btn" data-tab="tabTokens">Tokens <span class="badge" id="tokenCountBadge">0</span></button>
+        <button class="tab-btn" data-tab="tabAST">AST Tree</button>
+        <button class="tab-btn" data-tab="tabSymbols">Symbols <span class="badge" id="symbolCountBadge">0</span></button>
+        <button class="tab-btn" data-tab="tabErrors">Errors <span class="badge badge-error" id="errorCountBadge">0</span></button>
+        <button class="tab-btn" data-tab="tabAutomata">DFA Studio</button>
+      </div>
+
+      <div class="inspector-content">
+        <!-- 1. Console Output Tab -->
+        <div id="tabConsole" class="tab-panel active">
+          <div class="panel-header">
+            <span class="panel-title">TERMINAL OUTPUT</span>
+            <div class="panel-meta">
+              <span id="execTimeBadge" class="meta-item">Time: 0.00 ms</span>
+              <span id="stepCountBadge" class="meta-item">Steps: 0</span>
+            </div>
+          </div>
+          <div class="console-output" id="consoleOutput">
+            <div class="console-welcome">
+              <p class="terminal-text-cyan">CodeSnap Mini Compiler v1.0 [CSE Theory of Computation Project]</p>
+              <p class="terminal-text-dim">Ready for compilation and execution. Click "Run" or press Ctrl+Enter.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Token Explorer Tab -->
+        <div id="tabTokens" class="tab-panel">
+          <div class="panel-header">
+            <span class="panel-title">LEXICAL TOKEN STREAM</span>
+            <input type="text" id="tokenFilter" class="filter-input" placeholder="Filter tokens (e.g. KEYWORD, INTEGER)...">
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="tokenTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Lexeme</th>
+                  <th>Token Type</th>
+                  <th>Line:Col</th>
+                  <th>DFA / Regex Rule</th>
+                </tr>
+              </thead>
+              <tbody id="tokenTableBody">
+                <tr><td colspan="5" class="empty-state">No tokens generated yet. Run compilation to scan code.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3. AST Visualizer Tab -->
+        <div id="tabAST" class="tab-panel">
+          <div class="panel-header">
+            <span class="panel-title">ABSTRACT SYNTAX TREE (AST)</span>
+            <div class="ast-controls">
+              <button id="btnZoomIn" class="btn-icon" title="Zoom in">+</button>
+              <button id="btnZoomOut" class="btn-icon" title="Zoom out">-</button>
+              <button id="btnResetZoom" class="btn-icon" title="Reset view">⟲</button>
+              <button id="btnToggleAstJson" class="editor-btn" title="Toggle tree/JSON view">JSON View</button>
+            </div>
+          </div>
+
+          <!-- Tree Visualizer Container -->
+          <div class="ast-visual-container" id="astVisualContainer">
+            <svg id="astSvgCanvas" width="100%" height="100%"></svg>
+            <div id="astJsonView" class="ast-json-view" style="display: none;">
+              <pre id="astJsonPre">{}</pre>
+            </div>
+          </div>
+
+          <!-- AST Node Detail Inspector -->
+          <div class="ast-inspector-card" id="astNodeInspector">
+            <div class="card-title">Node Inspector</div>
+            <div id="astNodeDetails" class="node-details-content">
+              Click any node in the AST diagram above to inspect its syntax attributes.
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Symbol Table Tab -->
+        <div id="tabSymbols" class="tab-panel">
+          <div class="panel-header">
+            <span class="panel-title">SYMBOL TABLE (Scope & Types)</span>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="symbolTable">
+              <thead>
+                <tr>
+                  <th>Identifier</th>
+                  <th>Inferred Type</th>
+                  <th>Value</th>
+                  <th>Decl Line</th>
+                  <th>Scope Level</th>
+                </tr>
+              </thead>
+              <tbody id="symbolTableBody">
+                <tr><td colspan="5" class="empty-state">Symbol table empty. Compile code to populate.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 5. Error Explorer Tab -->
+        <div id="tabErrors" class="tab-panel">
+          <div class="panel-header">
+            <span class="panel-title">DIAGNOSTICS & ERRORS</span>
+          </div>
+          <div id="errorCardsContainer" class="error-list-container">
+            <div class="clean-state">
+              <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#22C55E" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <p>No compilation or runtime errors. Code is clean!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Automata Studio Tab (TOC Showcase) -->
+        <div id="tabAutomata" class="tab-panel">
+          <div class="panel-header">
+            <span class="panel-title">FINITE AUTOMATA STUDIO</span>
+            <select id="dfaSelector" class="select-input">
+              <option value="identifier">Identifier DFA: [a-zA-Z_][a-zA-Z0-9_]*</option>
+              <option value="number">Numeric DFA: Integer & Float</option>
+              <option value="relational">Relational Operators DFA (==, !=, &lt;=, &gt;=)</option>
+            </select>
+          </div>
+
+          <div class="automata-workbench">
+            <div class="automata-test-bar">
+              <label for="dfaTestInput">Test String:</label>
+              <input type="text" id="dfaTestInput" placeholder="Enter string (e.g. total_sum, 123.45)..." value="total_sum">
+              <button id="btnRunDfaTest" class="btn btn-secondary">Simulate DFA</button>
+            </div>
+
+            <!-- DFA Formal 5-Tuple Description -->
+            <div class="dfa-tuple-badge" id="dfaTupleBadge">
+              <strong>Formal 5-Tuple M = (Q, Σ, δ, q0, F):</strong>
+              <div id="dfaFormalDetails">Loading 5-tuple...</div>
+            </div>
+
+            <!-- DFA SVG Graph -->
+            <div class="dfa-graph-container" id="dfaGraphContainer">
+              <svg id="dfaSvgCanvas" width="100%" height="320"></svg>
+            </div>
+
+            <!-- Simulation Result & Step Trace -->
+            <div class="dfa-simulation-result" id="dfaSimulationResult">
+              <div class="sim-header" id="simHeader">Ready to simulate. Enter input string above.</div>
+              <div class="sim-steps" id="simStepsList"></div>
+            </div>
+
+            <!-- Transition Table -->
+            <div class="transition-table-box">
+              <div class="card-title">State Transition Matrix δ(q, σ)</div>
+              <div id="transitionTableContainer" class="table-container"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Documentation & Language Reference Modal -->
+  <div id="docsModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>CodeSnap Language Specification & Context-Free Grammar</h3>
+        <button id="btnCloseDocs" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h4>1. Context-Free Grammar (CFG in BNF)</h4>
+        <pre class="cfg-pre">
+&lt;Program&gt;          ::= 'START' &lt;StatementList&gt; 'STOP'
+&lt;StatementList&gt;    ::= &lt;Statement&gt; &lt;StatementList&gt; | ε
+&lt;Statement&gt;        ::= &lt;VarDeclaration&gt; | &lt;Assignment&gt; | &lt;PrintStatement&gt;
+                     | &lt;IfStatement&gt; | &lt;WhileStatement&gt; | &lt;ForStatement&gt;
+&lt;VarDeclaration&gt;   ::= 'LET' IDENTIFIER '=' &lt;Expression&gt;
+&lt;Assignment&gt;       ::= IDENTIFIER '=' &lt;Expression&gt;
+&lt;PrintStatement&gt;   ::= 'PRINT' &lt;Expression&gt;
+&lt;IfStatement&gt;      ::= 'IF' &lt;Expression&gt; &lt;StatementList&gt; [ 'ELSE' &lt;StatementList&gt; ] 'END'
+&lt;WhileStatement&gt;   ::= 'WHILE' &lt;Expression&gt; &lt;StatementList&gt; 'END'
+&lt;ForStatement&gt;     ::= 'FOR' IDENTIFIER '=' &lt;Expression&gt; 'TO' &lt;Expression&gt; [ 'STEP' &lt;Expression&gt; ] &lt;StatementList&gt; 'END'
+&lt;Expression&gt;       ::= &lt;LogicalOr&gt;
+&lt;LogicalOr&gt;        ::= &lt;LogicalAnd&gt; ( 'OR' &lt;LogicalAnd&gt; )*
+&lt;LogicalAnd&gt;       ::= &lt;LogicalNot&gt; ( 'AND' &lt;LogicalNot&gt; )*
+&lt;LogicalNot&gt;       ::= 'NOT' &lt;LogicalNot&gt; | &lt;Comparison&gt;
+&lt;Comparison&gt;       ::= &lt;ArithmeticExpr&gt; [ ( '==' | '!=' | '&lt;' | '&lt;=' | '&gt;' | '&gt;=' ) &lt;ArithmeticExpr&gt; ]
+&lt;ArithmeticExpr&gt;   ::= &lt;Term&gt; ( ( '+' | '-' ) &lt;Term&gt; )*
+&lt;Term&gt;             ::= &lt;Factor&gt; ( ( '*' | '/' | '%' ) &lt;Factor&gt; )*
+&lt;Factor&gt;           ::= ( '+' | '-' ) &lt;Factor&gt; | &lt;Primary&gt;
+&lt;Primary&gt;          ::= INTEGER | FLOAT | STRING | 'TRUE' | 'FALSE' | IDENTIFIER | '(' &lt;Expression&gt; ')'
+        </pre>
+
+        <h4>2. Operator Precedence Hierarchy</h4>
+        <table class="data-table">
+          <thead>
+            <tr><th>Level</th><th>Operators</th><th>Associativity</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1 (Lowest)</td><td>OR</td><td>Left-to-Right</td><td>Logical Disjunction</td></tr>
+            <tr><td>2</td><td>AND</td><td>Left-to-Right</td><td>Logical Conjunction</td></tr>
+            <tr><td>3</td><td>NOT</td><td>Right-to-Left</td><td>Logical Negation (Unary)</td></tr>
+            <tr><td>4</td><td>== != &lt; &lt;= &gt; &gt;=</td><td>Left-to-Right</td><td>Relational Comparisons</td></tr>
+            <tr><td>5</td><td>+ -</td><td>Left-to-Right</td><td>Addition, String Concat, Subtraction</td></tr>
+            <tr><td>6</td><td>* / %</td><td>Left-to-Right</td><td>Multiplication, Division, Modulo</td></tr>
+            <tr><td>7</td><td>+ - (unary)</td><td>Right-to-Left</td><td>Sign Operators</td></tr>
+            <tr><td>8 (Highest)</td><td>( ) Literals Identifiers</td><td>N/A</td><td>Grouping and Primaries</td></tr>
+          </tbody>
+        </table>
+
+        <h4>3. Theory of Computation Alignment</h4>
+        <p>This mini-project demonstrates key foundational TOC concepts:</p>
+        <ul>
+          <li><strong>Regular Expressions & Finite Automata:</strong> Lexical tokens (Identifiers, Literals, Operators) are regular languages recognized by Deterministic Finite Automata (DFA).</li>
+          <li><strong>Context-Free Grammars:</strong> CodeSnap's syntax is defined using context-free productions and recognized by a recursive descent parser (equivalent to a deterministic Pushdown Automaton).</li>
+          <li><strong>Chomsky Hierarchy:</strong> Distinguishes Type-3 (Regular Languages for tokens) and Type-2 (Context-Free Languages for nested statements and arithmetic expressions).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/visualizer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
