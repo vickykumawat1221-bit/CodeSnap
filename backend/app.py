@@ -15,7 +15,7 @@ PROJECT_ROOT = os.path.dirname(CURRENT_DIR)
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from backend.lexer import Lexer
 from backend.parser import Parser
 from backend.semantic import SemanticAnalyzer
@@ -43,6 +43,15 @@ def add_cors_headers(response):
 @app.route("/")
 def index():
     return send_from_directory(FRONTEND_DIR, "index.html")
+
+
+@app.route("/download-report")
+@app.route("/api/download-report")
+def download_report():
+    pdf_path = os.path.join(PROJECT_ROOT, "docs", "CodeSnap_Compiler_Project_Report.pdf")
+    if os.path.exists(pdf_path):
+        return send_file(pdf_path, as_attachment=True, download_name="CodeSnap_Compiler_Project_Report.pdf", mimetype="application/pdf")
+    return jsonify({"error": "Report PDF not found. Run generate_pdf.py to create it."}), 404
 
 
 @app.route("/<path:path>")
